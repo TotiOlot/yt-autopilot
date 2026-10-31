@@ -1,0 +1,73 @@
+name: YT Autopilot semanal
+
+on:
+  schedule:
+    - cron: "17 5 * * 0"     # cada domingo a las 05:17 UTC
+  workflow_dispatch:          # botón "Run workflow" para lanzarlo a mano
+    inputs:
+      videos:
+        description: "Número de vídeos (vacío = el de config.yaml)"
+        required: false
+
+permissions:
+  contents: write             # para guardar el historial de temas publicados
+
+jobs:
+  produce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Instalar ffmpeg y fuente
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg fonts-dejavu-core
+          mkdir -p assets/fonts
+          [ -f assets/fonts/Anton-Regular.ttf ] || curl -fsSL -o assets/fonts/Anton-Regular.ttf \
+            https://github.com/google/fonts/raw/main/ofl/anton/Anton-Regular.ttf || true
+
+      - run: pip install -r requirements.txt
+
+      - name: Producir vídeos
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+          NOTIFY_EMAIL: ${{ secrets.NOTIFY_EMAIL }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        run: |
+          if [ -n "${{ github.event.inputs.videos }}" ]; then
+            python -m pipeline.run --videos ${{ github.event.inputs.videos }}
+          else
+            python -m pipeline.run
+          fi
+
+      - name: Guardar vídeos y miniaturas (descargables 7 días)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos-${{ github.run_number }}
+          path: |
+            output/*.mp4
+            output/*.jpg
+            output/*.json
+          retention-days: 7
+          compression-level: 0
+
+      - name: Guardar historial
+        if: always()
+        run: |
+          git config user.name "yt-autopilot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/history.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "Historial: vídeos de la semana" && git push)
