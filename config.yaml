@@ -1,0 +1,53 @@
+# ============================================================
+#  YT AUTOPILOT — configuración del canal
+#  Todo lo que cambies aquí se aplica en la próxima ejecución.
+# ============================================================
+
+channel:
+  # Nicho inicial propuesto. Valídalo con NexLev y cámbialo si encuentras uno mejor.
+  niche: "The strange and dark history of medicine and science"
+  language: "English"
+  audience: "Curious adults 25-55 in the US/UK who enjoy documentary-style storytelling"
+  # Tono / personalidad del narrador: lo que hace que el canal NO parezca plantilla.
+  voice_persona: >
+    A calm, slightly wry documentary narrator who respects the audience's intelligence,
+    loves surprising primary-source details and never exaggerates facts.
+
+research:
+  # Búsquedas en YouTube para encontrar "outliers" (vídeos con muchas más visitas que suscriptores).
+  search_queries:
+    - "history of medicine documentary"
+    - "dark history of science"
+    - "weird medical history"
+    - "forgotten scientific experiments"
+    - "history of surgery"
+  published_within_days: 365
+  min_views: 100000
+  min_duration_minutes: 8
+  top_outliers: 8            # cuántos outliers se pasan a Claude para analizar la fórmula
+  # Opcional: pega aquí URLs de vídeos que encuentres en NexLev (tienen prioridad)
+  manual_outlier_urls: []
+
+production:
+  videos_per_run: 3
+  target_minutes: 10         # duración objetivo de cada vídeo
+  resolution: [1920, 1080]
+  fps: 30
+  seconds_per_shot: 6        # cada cuántos segundos cambia la imagen (retención)
+  burn_subtitles: true
+  music_volume: 0.07         # música de fondo (pon .mp3 libres de derechos en assets/music/)
+
+models:
+  claude: "claude-sonnet-5-5"
+  use_web_search: true       # Claude verifica datos en la web antes de escribir
+  elevenlabs_voice_id: "JBFqnCBsd6RMkjVDRZzb"   # cámbialo por la voz que elijas en ElevenLabs
+  elevenlabs_model: "eleven_multilingual_v2"
+
+publish:
+  # "review": te manda un email con los 3 vídeos listos para subir (sirve desde el día 1)
+  # "youtube": los sube programados a tu canal (solo cuando Google apruebe la auditoría de la API)
+  mode: "review"
+  schedule_days: ["tuesday", "thursday", "saturday"]
+  schedule_hour_utc: 15
+  category_id: "27"          # 27 = Education
+  made_with_ai_disclosure: true
